@@ -1,0 +1,224 @@
+% !TeX root = cr.tex
+
+\documentclass[12pt]{article}
+\usepackage{svg}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{graphicx}
+\usepackage{eurosym}
+\usepackage{amsmath}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{nccrules}
+\usepackage[table]{xcolor}
+\usepackage{wrapfig}
+\usepackage{pgfgantt}
+\usepackage{makecell}
+\usepackage{amssymb}
+\usepackage{gensymb}
+\usepackage{textcomp, gensymb} 
+\usepackage{enumitem}
+\usepackage{lmodern}
+\usepackage{mathrsfs}
+\usepackage{textcomp}
+\usepackage{multicol}
+\usepackage{listings}
+\usepackage{media9}
+\usepackage{graphicx}
+\usepackage{breakurl}
+\usepackage{parskip}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{matlab-prettifier}
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
+\usepackage{bookmark}
+
+\usetikzlibrary{angles,calc,decorations.pathreplacing}
+
+\title{\textbf{Projet image couleur 2 - Auto White Balance}}
+
+\author{
+    \textsc{Duteyrat Antoine},
+    \textsc{Sève Léo}
+}
+
+\date{\today}
+
+%----------------------------------------------------------------%
+%----------------------------------------------------------------%
+%----------------------------------------------------------------%
+
+\definecolor{couleur}{RGB}{0,0,0}
+\pagestyle {fancy}
+
+\makeatletter
+\let\titre\@title %Variable titre
+\let\auteurs\@author %Variable auteurs
+\let\date\@date %Variable date
+\makeatother
+
+
+%----------------------------------------------------------------%
+
+%En-tête
+\renewcommand{\headrulewidth}{1pt} %Taille du trait
+\setlength{\headheight}{45pt}
+\fancyhead[L]{\titre}
+\fancyhead[R]{}
+
+%Pied de page personnalisé :
+\renewcommand{\footrulewidth}{0.5pt} %Taille du trait
+\fancyfoot[C]{\thepage\ / \pageref{LastPage}} %PageActuelle / nbrePages au centre
+
+%-----------------------------------------------------------------%
+%-----------------------------------------------------------------%
+%-----------------------------------------------------------------%
+
+\begin{document}
+
+%-----------------------%
+%-----Page de garde-----%
+\begin{titlepage}
+    \begin{center}
+        \vskip 1.5cm
+        {\color {couleur}{\huge \bf \titre}}\\[5mm] % Affiche la variable titre
+        \vskip 0.5cm
+        \begin{figure}[h]
+        \centering
+        \includegraphics[width=7cm]{images/logo_tse.png}
+        \end{figure}
+        \vskip 1cm % Saut de ligne
+        {\large \auteurs}\\ % Affiche la variable auteurs  
+        \vskip 0.5cm % Saut de ligne
+        \vfill
+        \color{couleur}{\dashrule[1mm]{15cm}{0.5}} % Trait final
+        \vskip 0.2cm
+        \date % Affiche la variable date
+      \end{center}
+\end{titlepage}
+\clearpage
+
+\tableofcontents
+
+\newpage
+
+%-----------------------------------
+\section{Objectif}
+%-----------------------------------
+
+L'objectif de ce projet est d'automatiser la balance des blancs d'un ensemble de 12 images.
+La première partie consiste à détecter la présence et la position des mires MacBeth dans chaque image.
+Le second objectif est de se servir de ces mires pour estimer la balance des blancs de l'image.
+
+%-----------------------------------
+\section{Données}
+%-----------------------------------
+
+Pour ce projet, un jeu de photographies a été fourni, contenant 12 images contenant des mires MacBeth. Ces images ont été prises dans des conditions d'éclairage variées, ce qui permet d'étudier l'impact de la lumière sur la perception des couleurs.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=5cm]{images/1.jpg}
+    \caption{Photographie numéro 1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=5cm]{images/3.jpg}
+    \caption{Photographie numéro 3}
+\end{figure}
+
+\clearpage
+
+%-----------------------------------
+\section{Étapes}
+%-----------------------------------
+
+La démarche méthodologique suivie dans ce projet se décline en plusieurs étapes :
+
+Dans un premier temps, les coordonnées colorimétriques XYZ de chaque éclairage sont calculées afin d'obtenir une référence précise pour chaque condition d'illumination étudiée. On considère un matériau lambertien de réflectance 1.
+
+Ensuite, on détermine les coordonnées XYZ de chaque patch coloré sous chaque éclairage considéré, pour quantifier précisément leur réponse colorimétrique selon les conditions lumineuses.
+
+La troisième étape consiste à convertir ces coordonnées XYZ en espace colorimétrique L*a*b*, ce qui permet une analyse plus intuitive et perceptuellement pertinente des différences de couleur observées.
+
+\begin{figure}[H]
+    \centering
+    \caption{Représentation des valeurs L*a*b* en trois dimensions}
+\end{figure}
+
+On calcule ensuite l'ensemble des Delta E à partir des valeurs L*a*b*, entre chaque patch pour chaque condition d'éclairage. Ces différences chiffrées permettent d'identifier les variations perceptuelles significatives ou non.
+
+Enfin, un couple t optimal de patchs et d'éclairages est sélectionné, caractérisé par une très faible différence de couleur (Delta E très bas) dans une configuration, et au contraire, une différence très marquée (Delta E élevé) dans une autre configuration.
+
+Enfin, on créera une image utilisant les couleurs des deux patchs, en retenant le nom des deux illuminants à utiliser pour visualiser ou non le message.
+
+\clearpage
+
+%-----------------------------------
+\section{Résultats}
+%-----------------------------------
+
+On arrive aux données suivantes :
+
+\begin{center}
+\begin{tabular}{|p{5cm}|p{6cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Résultats obtenus}} \\
+    \hline
+    \textbf{Paramètre} & \textbf{Valeur choisie} \\
+    \hline
+    Éclairage de dissimulation & DR1 (Illuminant n°3) \\
+    \hline
+    Éclairage de révélation & V1 (Illuminant n°17) \\
+    \hline
+    Paire de patchs sélectionnée & Patch 76 vs Patch 169 \\
+    \hline
+\end{tabular}
+
+\begin{tabular}{|p{5cm}|p{7cm}|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Différences colorimétriques ($\Delta E$)}} \\
+    \hline
+    \textbf{Condition} & \textbf{Delta E ($\Delta E$)} \\
+    \hline
+    Dissimulation ($\Delta E_{\text{hide}}$) & 1.09 (très faible, couleurs difficilement distinguables) \\
+    \hline
+    Révélation ($\Delta E_{\text{reveal}}$) & 172.07 (très élevé, couleurs très différentes) \\
+    \hline
+\end{tabular}
+\end{center}
+
+\vspace{0.5cm}
+
+\clearpage
+
+Pour ces valeurs, on obtient l'image suivante :
+
+\begin{figure}[H]
+    \centering
+    \caption{Image des composantes RGB utlisées}
+\end{figure}
+
+\clearpage
+
+Et on attend les résultats visuels suivants :
+
+\begin{figure}[H]
+    \centering
+    \caption{Représentation attendue}
+\end{figure}
+
+\clearpage
+
+%-----------------------------------
+\section{Où trouver notre travail ?}
+%-----------------------------------
+
+Tout le travail dont il est question dans ce rapport est disponible sur \href{https://github.com/antoinedenovembre/colorimetry_project_2}{github}.
+
+\end{document}
