@@ -1,13 +1,8 @@
-"""
-Requires:
-    pip install opencv-contrib-python numpy colorama
-"""
-
 import cv2
 import numpy as np
 import argparse
 from pathlib import Path
-from colorama import init, Fore, Style
+from colorama import init, Fore
 
 def linearize(img: np.ndarray) -> np.ndarray:
     """
@@ -96,7 +91,7 @@ def main():
         files.extend(folder.glob(pat))
     files = sorted(files)
     if not files:
-        print(Fore.YELLOW + f"No JPG/JPEG files found in '{folder}'.")
+        print(Fore.YELLOW + f"No JPG files found in '{folder}'.")
         return
 
     for img_path in files:
