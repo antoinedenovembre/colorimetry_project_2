@@ -1,0 +1,258 @@
+% !TeX root = cr.tex
+
+\documentclass[12pt]{article}
+\usepackage{svg}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{graphicx}
+\usepackage{eurosym}
+\usepackage{amsmath}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{nccrules}
+\usepackage[table]{xcolor}
+\usepackage{wrapfig}
+\usepackage{pgfgantt}
+\usepackage{makecell}
+\usepackage{amssymb}
+\usepackage{gensymb}
+\usepackage{textcomp, gensymb} 
+\usepackage{enumitem}
+\usepackage{lmodern}
+\usepackage{mathrsfs}
+\usepackage{textcomp}
+\usepackage{multicol}
+\usepackage{listings}
+\usepackage{media9}
+\usepackage{graphicx}
+\usepackage{breakurl}
+\usepackage{parskip}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{matlab-prettifier}
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
+\usepackage{bookmark}
+
+\usetikzlibrary{angles,calc,decorations.pathreplacing}
+
+\title{\textbf{Projet image couleur 2 - Auto White Balance}}
+
+\author{
+    \textsc{Duteyrat Antoine},
+    \textsc{Sève Léo}
+}
+
+\date{\today}
+
+%----------------------------------------------------------------%
+%----------------------------------------------------------------%
+%----------------------------------------------------------------%
+
+\definecolor{couleur}{RGB}{0,0,0}
+\pagestyle {fancy}
+
+\makeatletter
+\let\titre\@title %Variable titre
+\let\auteurs\@author %Variable auteurs
+\let\date\@date %Variable date
+\makeatother
+
+
+%----------------------------------------------------------------%
+
+%En-tête
+\renewcommand{\headrulewidth}{1pt} %Taille du trait
+\setlength{\headheight}{45pt}
+\fancyhead[L]{\titre}
+\fancyhead[R]{}
+
+%Pied de page personnalisé :
+\renewcommand{\footrulewidth}{0.5pt} %Taille du trait
+\fancyfoot[C]{\thepage\ / \pageref{LastPage}} %PageActuelle / nbrePages au centre
+
+%-----------------------------------------------------------------%
+%-----------------------------------------------------------------%
+%-----------------------------------------------------------------%
+
+\begin{document}
+
+%-----------------------%
+%-----Page de garde-----%
+\begin{titlepage}
+    \begin{center}
+        \vskip 1.5cm
+        {\color {couleur}{\huge \bf \titre}}\\[5mm] % Affiche la variable titre
+        \vskip 0.5cm
+        \begin{figure}[h]
+        \centering
+        \includegraphics[width=7cm]{images/logo_tse.png}
+        \end{figure}
+        \vskip 1cm % Saut de ligne
+        {\large \auteurs}\\ % Affiche la variable auteurs  
+        \vskip 0.5cm % Saut de ligne
+        \vfill
+        \color{couleur}{\dashrule[1mm]{15cm}{0.5}} % Trait final
+        \vskip 0.2cm
+        \date % Affiche la variable date
+      \end{center}
+\end{titlepage}
+\clearpage
+
+\tableofcontents
+
+\newpage
+
+%-----------------------------------
+\section{Objectif}
+%-----------------------------------
+
+L'objectif de ce projet est d'automatiser la balance des blancs d'un ensemble de 12 images.
+La première partie consiste à détecter la présence et la position des mires MacBeth dans chaque image.
+Le second objectif est de se servir de ces mires pour estimer la balance des blancs de l'image.
+
+%-----------------------------------
+\section{Données}
+%-----------------------------------
+
+Pour ce projet, un jeu de photographies a été fourni, contenant 12 images contenant des mires MacBeth. Ces images ont été prises dans des conditions d'éclairage variées, ce qui permet d'étudier l'impact de la lumière sur la perception des couleurs.
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/1.jpg}
+        \caption{Photographie numéro 1}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/3.jpg}
+        \caption{Photographie numéro 3}
+    \end{minipage}
+\end{figure}
+
+À noter que l'image 9 comporte une mire différente des autres, ce qui empêche sa détection par la fonction OpenCV.
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/9.jpg}
+        \caption{Photographie numéro 9}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/9_chart.jpg}
+        \caption{Mire image numéro 9}
+    \end{minipage}
+\end{figure}
+
+\clearpage
+
+%-----------------------------------
+\section{Étapes}
+%-----------------------------------
+
+La démarche suivie dans ce projet se décline en plusieurs étapes :
+
+\subsection{Détection de la mire}
+
+Dans un premier temps, on détecte les mires MacBeth dans chaque image, en utilisant la fonction OpenCV \href{https://docs.opencv.org/4.x/dd/d19/group__mcc.html\#gga836ee96afcefd4f35e95760ca9e8163da3c0b5a40e1157d57f944cab818e7311d}{cv2.mcc.CCheckerDetector}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/det_1.jpg}
+    \caption{Résultat de la détection de la mire sur l'image 1}
+\end{figure}
+
+\subsection{Linéarisation des images JPG}
+
+Ensuite, il est nécessaire de linéariser les images sources. Les images JPG sont encodées avec une correction gamma, qui doit être "inversée" pour travailler avec des valeurs linéaires. Pour les images JPG suivant l'espace colorimétrique sRGB, la fonction de linéarisation s'exprime comme suit :
+
+\begin{equation}
+RGB_{\text{linéaire}} = 
+\begin{cases} 
+\frac{RGB_{\text{non-linéaire}}}{12.92} & \text{si } RGB_{\text{non-linéaire}} \leq 0.04045 \\ 
+\left(\frac{RGB_{\text{non-linéaire}} + 0.055}{1.055}\right)^{2.4} & \text{si } RGB_{\text{non-linéaire}} > 0.04045
+\end{cases}
+\end{equation}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/1.jpg}
+        \caption{Photographie numéro 1 non-linéarisée}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/lin_1.jpg}
+        \caption{Mire image numéro 1 linéarisée}
+    \end{minipage}
+\end{figure}
+
+\subsection{Balance des blancs}
+
+Le troisième et dernier objectif est de récupérer les patchs gris de la mire, et utiliser leurs couleurs sous un illuminant blanc de référence (D65) pour estimer la balance des blancs de l'image.
+Pour cette étape, on utilise la matrice de Von Kries qui permet d'adapter les couleurs d'une image d'un illuminant à un autre.
+
+La matrice de Von Kries se définit comme suit :
+
+\begin{equation}
+M_{vk} = 
+\begin{pmatrix}
+\frac{X_{d}}{X_{s}} & 0 & 0 \\
+0 & \frac{Y_{d}}{Y_{s}} & 0 \\
+0 & 0 & \frac{Z_{d}}{Z_{s}}
+\end{pmatrix}
+\end{equation}
+
+où $(X_s, Y_s, Z_s)$ représente le point blanc source et $(X_d, Y_d, Z_d)$ le point blanc destination. 
+
+En pratique, la transformation peut également être appliquée dans l'espace RGB :
+
+\begin{equation}
+\begin{pmatrix}
+R' \\
+G' \\
+B'
+\end{pmatrix} = 
+\begin{pmatrix}
+\frac{R_{white}}{R_{gray}} & 0 & 0 \\
+0 & \frac{G_{white}}{G_{gray}} & 0 \\
+0 & 0 & \frac{B_{white}}{B_{gray}}
+\end{pmatrix}
+\begin{pmatrix}
+R \\
+G \\
+B
+\end{pmatrix}
+\end{equation}
+
+Cette transformation est ensuite appliquée à l'image linéarisée pour arriver à une image équilibrée.
+
+\clearpage
+
+%-----------------------------------
+\section{Résultats}
+%-----------------------------------
+
+On arrive aux images suivantes :
+
+
+
+\clearpage
+
+%-----------------------------------
+\section{Où trouver notre travail ?}
+%-----------------------------------
+
+Tout le travail dont il est question dans ce rapport est disponible sur \href{https://github.com/antoinedenovembre/colorimetry_project_2}{github}.
+
+\end{document}
