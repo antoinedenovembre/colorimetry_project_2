@@ -170,6 +170,15 @@ Dans un premier temps, on détecte les mires MacBeth dans chaque image, en utili
     \caption{Résultat de la détection de la mire sur l'image 1}
 \end{figure}
 
+Cette fonction a toutefois quelques limites, notamment dans la détection d'une mire qui ne correspond pas tout à fait à la mire MacBeth, comme c'est le cas pour l'image 9. 
+On trouve également quelques erreurs dans l'orientation de la mire, comme sur l'image 10, cette erreur en particulier ne nous permet pas d'effectuer le calcul détaillé en section~\ref{sec:balance_des_blancs}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/det_10.jpg}
+    \caption{Mauvaise orientation de la mire sur l'image 10}
+\end{figure}
+
 \subsection{Linéarisation des images JPG}
 
 Ensuite, il est nécessaire de linéariser les images sources. Les images JPG sont encodées avec une correction gamma, qui doit être "inversée" pour travailler avec des valeurs linéaires. Pour les images JPG suivant l'espace colorimétrique sRGB, la fonction de linéarisation s'exprime comme suit :
@@ -181,6 +190,8 @@ RGB_{\text{linéaire}} =
 \left(\frac{RGB_{\text{non-linéaire}} + 0.055}{1.055}\right)^{2.4} & \text{si } RGB_{\text{non-linéaire}} > 0.04045
 \end{cases}
 \end{equation}
+
+Il est bon de noter ici que la linéarisation est appliquée vectoriellement sur l'image, c'est-à-dire que le traitement s'exécute plan par plan (B, G et R) de l'image.
 
 \begin{figure}[H]
     \centering
@@ -198,44 +209,29 @@ RGB_{\text{linéaire}} =
 \end{figure}
 
 \subsection{Balance des blancs}
+\label{sec:balance_des_blancs}
 
-Le troisième et dernier objectif est de récupérer les patchs gris de la mire, et utiliser leurs couleurs sous un illuminant blanc de référence (D65) pour estimer la balance des blancs de l'image.
-Pour cette étape, on utilise la matrice de Von Kries qui permet d'adapter les couleurs d'une image d'un illuminant à un autre.
-
-La matrice de Von Kries se définit comme suit :
-
-\begin{equation}
-M_{vk} = 
-\begin{pmatrix}
-\frac{X_{d}}{X_{s}} & 0 & 0 \\
-0 & \frac{Y_{d}}{Y_{s}} & 0 \\
-0 & 0 & \frac{Z_{d}}{Z_{s}}
-\end{pmatrix}
-\end{equation}
-
-où $(X_s, Y_s, Z_s)$ représente le point blanc source et $(X_d, Y_d, Z_d)$ le point blanc destination. 
-
-En pratique, la transformation peut également être appliquée dans l'espace RGB :
+Le troisième et dernier objectif est de récupérer un patch gris donné de la mire et d'utiliser ses composantes BGR pour corriger l'image.
+Pour ce faire, on se base sur le postulat qu'un patch de la ligne des gris (par exemple le n°21) doit avoir trois composantes égales.
+Alors, une fois que nous avons récupéré ses composantes, il est possible d'effectuer les calculs suivants :
 
 \begin{equation}
-\begin{pmatrix}
-R' \\
-G' \\
-B'
-\end{pmatrix} = 
-\begin{pmatrix}
-\frac{R_{white}}{R_{gray}} & 0 & 0 \\
-0 & \frac{G_{white}}{G_{gray}} & 0 \\
-0 & 0 & \frac{B_{white}}{B_{gray}}
-\end{pmatrix}
-\begin{pmatrix}
-R \\
-G \\
-B
-\end{pmatrix}
+    \overline{\text{BGR}} = \frac{B + G + R}{3}
 \end{equation}
 
-Cette transformation est ensuite appliquée à l'image linéarisée pour arriver à une image équilibrée.
+Et pour chaque pixel de l'image, on applique la correction suivante :
+
+\begin{equation}
+    \text{B} = \frac{\text{B} \cdot \overline{\text{BGR}}}{B_{\text{patch}}}
+\end{equation}
+\begin{equation}
+    \text{G} = \frac{\text{G} \cdot \overline{\text{BGR}}}{G_{\text{patch}}}
+\end{equation}
+\begin{equation}
+    \text{R} = \frac{\text{R} \cdot \overline{\text{BGR}}}{R_{\text{patch}}}
+\end{equation}
+
+Il est important de noter que la moyenne du patch gris est calculée sur un voisinage de 3x3 pixels, afin d'éviter les effets de bord.
 
 \clearpage
 
@@ -245,7 +241,170 @@ Cette transformation est ensuite appliquée à l'image linéarisée pour arriver
 
 On arrive aux images suivantes :
 
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/1.jpg}
+        \caption{Image 1 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_1.jpg}
+        \caption{Image 1 après balance des blancs}
+    \end{minipage}
+\end{figure}
 
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/2.jpg}
+        \caption{Image 2 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_2.jpg}
+        \caption{Image 2 après balance des blancs}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/3.jpg}
+        \caption{Image 3 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_3.jpg}
+        \caption{Image 3 après balance des blancs}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/4.jpg}
+        \caption{Image 4 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_4.jpg}
+        \caption{Image 4 après balance des blancs}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/5.jpg}
+        \caption{Image 5 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_5.jpg}
+        \caption{Image 5 après balance des blancs}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/6.jpg}
+        \caption{Image 6 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_6.jpg}
+        \caption{Image 6 après balance des blancs}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/7.jpg}
+        \caption{Image 7 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_7.jpg}
+        \caption{Image 7 après balance des blancs}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/8.jpg}
+        \caption{Image 8 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_8.jpg}
+        \caption{Image 8 après balance des blancs}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/10.jpg}
+        \caption{Image 10 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_10.jpg}
+        \caption{Image 10 après balance des blancs}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/11.jpg}
+        \caption{Image 11 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_11.jpg}
+        \caption{Image 11 après balance des blancs}
+    \end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/data/12.jpg}
+        \caption{Image 12 originale}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/wb/balanced_12.jpg}
+        \caption{Image 12 après balance des blancs}
+    \end{minipage}
+\end{figure}
 
 \clearpage
 
