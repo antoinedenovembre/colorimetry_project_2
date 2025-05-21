@@ -15,27 +15,25 @@ def linearize(img: np.ndarray) -> np.ndarray:
     img_lin = np.where(mask, img / 12.92, ((img + 0.055) / 1.055) ** 2.4)
     return img_lin
 
-def extract_patch_means(checker) -> np.ndarray:
-    """
-    Given an OpenCV mcc ColorChecker object, return a (24,3) array of
-    mean RGB values for each patch, in the standard row-by-row order.
-    """
-    # raw is (24 patches × 3 channels, 5 metrics) = shape (72, 5)
-    raw = np.array(checker.getChartsRGB(), dtype=np.float32)
-    
-    # reshape to (patch, channel, metric)
-    n_patches = raw.shape[0] // 3
-    raw = raw.reshape(n_patches, 3, 5)
+def extract_patch_center_coordinates(checker) -> np.ndarray:
+    centers_4 = checker.getColorCharts()  # list of (x,y) floats for each patch
+    centers_1 = [[0, 0] for _ in range(24)]
 
-    # metrics are in columns:
-    #   0 = pixel count, 1 = average, 2 = stddev, 3 = max, 4 = min
-    rgb = []
-    for i in range(n_patches):
-        rgb.append((raw[i][0][1], raw[i][1][1], raw[i][2][1]))
+    cx, cy = 0, 0
+    for i in range(24):
+        for j in range(4):
+            cx += centers_4[i*4 + j][0]
+            cy += centers_4[i*4 + j][1]
+        cx /= 4
+        cy /= 4
+        cx = int(cx)
+        cy = int(cy)
+        centers_1[i] = [cx, cy]
+        cx, cy = 0, 0
 
-    return rgb  # each row is [R, G, B]
+    return centers_1
 
-def detect_macbeth(img: np.ndarray, chart_type: int, max_num: int) -> tuple[np.ndarray, bool, list]:
+def detect_macbeth(img: np.ndarray, chart_type: int, max_num: int) -> tuple[np.ndarray, bool, np.ndarray]:
     """
     Run the OpenCV mcc detector on `img`. Returns the annotated image,
     a flag indicating whether any chart was found, and the RGB values of all patches.
@@ -47,27 +45,27 @@ def detect_macbeth(img: np.ndarray, chart_type: int, max_num: int) -> tuple[np.n
     if not found:
         return img, False, patch_colors
 
-    # after detector.process(...) and you know a checker was found:
+    # get the first detected checker
     checker = detector.getListColorChecker()[0]
 
-    # get the patch colors (RGB values)
-    patch_colors = extract_patch_means(checker)
-
+    # draw the usual chart outlines
     drawer = cv2.mcc.CCheckerDraw.create(checker)
     drawer.draw(img)
-    
-    return img, True, patch_colors
 
-def apply_white_balance(img_bgr: np.ndarray, ref_rgb: np.ndarray) -> np.ndarray:
+    centers = extract_patch_center_coordinates(checker)
+
+    return img, True, centers
+
+def apply_white_balance(img_bgr: np.ndarray, ref_bgr: np.ndarray) -> np.ndarray:
     """
     img_bgr : float32 array in [0–1], shape (H,W,3) BGR
-    ref_rgb : uint8 or float32 patch color in [0–255] or [0–1]
+    ref_bgr : uint8 or float32 patch color in [0–255] or [0–1] BGR
     """
-    mean = np.sum(ref_rgb) / 3
+    mean = np.sum(ref_bgr) / 3
 
-    img_bgr[:, :, 0] /= ref_rgb[2]
-    img_bgr[:, :, 1] /= ref_rgb[1]
-    img_bgr[:, :, 2] /= ref_rgb[0]
+    img_bgr[:, :, 0] /= (ref_bgr[0] + 1)
+    img_bgr[:, :, 1] /= (ref_bgr[1] + 1)
+    img_bgr[:, :, 2] /= (ref_bgr[2] + 1)
     img_bgr *= mean
 
     return img_bgr
@@ -89,28 +87,26 @@ def process_image(path: Path, chart_enum: int, max_num: int):
     print(Fore.CYAN + f"Linearized '{path.name}'.")
 
     # detect
-    annotated, found, patch_colors = detect_macbeth(img_lin_8u, chart_enum, max_num)
+    annotated, found, centers = detect_macbeth(img_lin_8u, chart_enum, max_num)
     if not found:
         print(Fore.YELLOW + f"Warning: no chart detected in '{path.name}'.")
+        exit(0)
     else:
         out_name = "det_" + path.stem + path.suffix
         out_path = path.parent.parent / "results" / out_name
         cv2.imwrite(str(out_path), annotated)
         print(Fore.GREEN + f"Saved annotated '{out_name}'.")
 
-    # retrieve a reference patch
-    ref_patch = 22
-    # Check if we have patch colors (chart was found)
-    if not found or len(patch_colors) <= ref_patch:
-        print(Fore.YELLOW + f"Skipping adaptation for '{path.name}' - no valid color patches detected.")
-        return
-        
-    # pick your patch (still in RGB order):
-    img_lin_float = np.clip(img_lin * 255.0, 0, 255).astype(np.float32)
-    ref_patch_color = np.round(np.array(patch_colors[ref_patch])).astype(np.uint8)
+    # retrieve the reference patch RGB values
+    num_ref_patch = 21
+    cx = centers[num_ref_patch][0]
+    cy = centers[num_ref_patch][1]
 
     # apply WB on the *linear* float image:
-    wb_lin = apply_white_balance(img_lin_float, ref_patch_color)
+    img_lin_new = np.clip(img_lin * 255.0, 0, 255).astype(np.uint8)
+    ref_bgr_values = img_lin_new[cy, cx]
+    img_lin_float = np.clip(img_lin * 255.0, 0, 255).astype(np.float32)
+    wb_lin = apply_white_balance(img_lin_float, ref_bgr_values)
 
     # apply white balance
     out_8u = np.clip(wb_lin, 0, 255).astype(np.uint8)
