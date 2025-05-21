@@ -191,7 +191,7 @@ RGB_{\text{linéaire}} =
 \end{cases}
 \end{equation}
 
-Il est bon de noter ici que la linéarisation est appliquée vectoriellement sur l'image, c'est-à-dire que le traitement s'exécute plan par plan (B, G et R) de l'image.
+Il est bon de noter ici que la linéarisation est appliquée vectoriellement sur l'image, c'est-à-dire que le traitement s'exécute sur tous les plans de l'image en même temps, permettant d'accélérer le traitement.
 
 \begin{figure}[H]
     \centering
@@ -231,7 +231,7 @@ Et pour chaque pixel de l'image, on applique la correction suivante :
     \text{R} = \frac{\text{R} \cdot \overline{\text{BGR}}}{R_{\text{patch}}}
 \end{equation}
 
-Il est important de noter que la moyenne du patch gris est calculée sur un voisinage de 3x3 pixels, afin d'éviter les effets de bord.
+Il est important de noter que la moyenne du patch gris est calculée sur un voisinage de 3x3 pixels, afin de lisser les variations de couleur dues à la lumière et aux réflexions sur le centre des patchs.
 
 \clearpage
 
@@ -243,166 +243,222 @@ On arrive aux images suivantes :
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/1.jpg}
         \caption{Image 1 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_1.jpg}
         \caption{Image 1 après balance des blancs}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_1.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/2.jpg}
         \caption{Image 2 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_2.jpg}
         \caption{Image 2 après balance des blancs}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_2.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/3.jpg}
         \caption{Image 3 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_3.jpg}
         \caption{Image 3 après balance des blancs}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_3.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/4.jpg}
         \caption{Image 4 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_4.jpg}
         \caption{Image 4 après balance des blancs}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_4.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/5.jpg}
         \caption{Image 5 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_5.jpg}
         \caption{Image 5 après balance des blancs}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_5.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/6.jpg}
         \caption{Image 6 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_6.jpg}
         \caption{Image 6 après balance des blancs}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_6.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/7.jpg}
         \caption{Image 7 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_7.jpg}
         \caption{Image 7 après balance des blancs}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_7.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/8.jpg}
         \caption{Image 8 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_8.jpg}
         \caption{Image 8 après balance des blancs}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_8.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/10.jpg}
         \caption{Image 10 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_10.jpg}
         \caption{Image 10 après balance des blancs (non fonctionnelle)}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_10.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/11.jpg}
         \caption{Image 11 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_11.jpg}
         \caption{Image 11 après balance des blancs}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_11.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/data/12.jpg}
         \caption{Image 12 originale}
     \end{minipage}
     \hfill
-    \begin{minipage}{0.48\textwidth}
+    \begin{minipage}{0.32\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/wb/balanced_12.jpg}
         \caption{Image 12 après balance des blancs}
+    \end{minipage}
+    \begin{minipage}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/graphs/rg_graph_12.png}
+        \caption{Points de la mire dans l'espace "rg", avant et après correction}
     \end{minipage}
 \end{figure}
 

@@ -42,8 +42,8 @@ def main():
         print(Fore.YELLOW + f"No JPG files found in '{folder}'.")
         return
     
-    # Create resuts/linearized, results/detection and results/wb directories if they don't exist
-    for subdir in ["linearized", "detection", "wb"]:
+    # Create resuts/linearized, results/detection, results/wb and results/graphs directories if they don't exist
+    for subdir in ["linearized", "detection", "wb", "graphs"]:
         (folder.parent / "results" / subdir).mkdir(parents=True, exist_ok=True)
 
     for img_path in files:
