@@ -83,7 +83,7 @@ def process_image(path: Path, chart_enum: int, max_num: int):
     wb_lin = apply_white_balance(img_lin_float, ref_bgr)
 
     # save the white-balanced image
-    out_8u = wb_lin.astype(np.uint8)
+    out_8u = np.clip(wb_lin, 0, 255).astype(np.uint8)
     out_name = "balanced_" + path.stem + path.suffix
     out_path = path.parent.parent / "results" / "wb" / out_name
     cv2.imwrite(str(out_path), out_8u)
