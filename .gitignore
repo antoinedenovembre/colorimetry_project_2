@@ -7,3 +7,6 @@ report/*
 report/images/*
 !report/*.pdf
 !report/*.tex
+
+# Python cache
+__pycache__/
